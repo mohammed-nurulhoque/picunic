@@ -1,4 +1,4 @@
-//! bigfont - Render text as large Unicode art using picunic embeddings
+//! bigfoont - Render text as large Unicode art using picunic embeddings
 
 use clap::Parser;
 use image::{GrayImage, Luma};
@@ -7,7 +7,7 @@ use picunic::{EmbeddingMatcher, PicunicError};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "bigfont", about = "Render text as large Unicode art")]
+#[command(name = "bigfoont", about = "Render text as large Unicode art")]
 struct Args {
     /// Text to render
     text: String,

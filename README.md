@@ -1,12 +1,14 @@
 # picunic
 
-Convert images to Unicode art using CNN embeddings.
+Convert images to Unicode art using CNN embeddings. Includes `bigfoont` for rendering text as large Unicode art.
 
 | Input | Output |
 |-------|--------|
 | ![Input](line-art.png) | ![Output](line-art-out.png) |
 
 ## Usage
+
+### picunic - image to Unicode
 
 ```bash
 picunic image.png              # 80 chars wide
@@ -15,6 +17,14 @@ picunic image.png -w 120 -H 40 # explicit height
 picunic image.png --ascii      # ASCII only
 picunic image.png --all        # include emoji chars
 picunic image.png -i           # invert colors
+```
+
+### bigfoont - text to large Unicode
+
+```bash
+bigfoont "HELLO" -w 4 -H 4                                  # 4×4 chars per letter
+bigfoont "HELLO" -w 3 -H 3 --font assets/PressStart2P.ttf   # pixel font (best)
+bigfoont "HELLO" --ascii                                    # ASCII output only
 ```
 
 ## How it works
