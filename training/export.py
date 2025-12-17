@@ -5,6 +5,7 @@ import argparse
 import json
 import numpy as np
 import torch
+import unicodedata
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from fontTools.ttLib import TTFont
@@ -13,7 +14,7 @@ from model import CharEncoder
 
 CELL_W, CELL_H = 8, 16
 
-# Ranges to EXCLUDE (emoji + RTL scripts + combining marks)
+# Ranges to EXCLUDE (emoji + RTL scripts + complex scripts)
 EXCLUDE_RANGES = [
     # Emoji
     (0x1F300, 0x1F9FF),  # Miscellaneous Symbols and Pictographs, Emoticons, etc.
@@ -31,22 +32,67 @@ EXCLUDE_RANGES = [
     (0x08A0, 0x08FF),    # Arabic Extended-A
     (0xFB50, 0xFDFF),    # Arabic Presentation Forms-A
     (0xFE70, 0xFEFF),    # Arabic Presentation Forms-B
-    # Combining diacritical marks (zero-width, cause misalignment)
-    (0x0300, 0x036F),    # Combining Diacritical Marks
-    (0x1AB0, 0x1AFF),    # Combining Diacritical Marks Extended
-    (0x1DC0, 0x1DFF),    # Combining Diacritical Marks Supplement
-    (0x20D0, 0x20FF),    # Combining Diacritical Marks for Symbols
-    (0xFE20, 0xFE2F),    # Combining Half Marks
+    # Complex scripts with combining marks
+    (0x0E00, 0x0E7F),    # Thai
+    (0x0E80, 0x0EFF),    # Lao
+    (0x0F00, 0x0FFF),    # Tibetan
+    (0x1000, 0x109F),    # Myanmar
     # Other problematic
     (0xFFFC, 0xFFFC),    # Object Replacement Character
+    (0xFFF9, 0xFFFB),    # Interlinear annotation anchors
+]
+
+# Unicode general categories that are zero-width or problematic
+EXCLUDE_CATEGORIES = {
+    'Mn',  # Mark, Nonspacing (combining marks)
+    'Me',  # Mark, Enclosing
+    'Mc',  # Mark, Spacing Combining
+    'Cf',  # Format, Other (zero-width joiners, direction marks, etc.)
+    'Cc',  # Control characters (C0/C1)
+    'Lm',  # Modifier letters (often rendered narrow)
+    'Sk',  # Modifier symbols (diacritics, often narrow)
+}
+
+# Additional ranges to exclude for monospace alignment
+ADDITIONAL_EXCLUDE_RANGES = [
+    (0x0080, 0x009F),    # C1 control characters
+    (0x02B0, 0x02FF),    # Spacing Modifier Letters (often narrow)
+    (0x1D00, 0x1DBF),    # Phonetic Extensions (often narrow)
+    (0x2000, 0x200A),    # Various-width spaces
+    (0x2070, 0x209C),    # Superscripts and Subscripts (narrow)
+    (0x2E00, 0x2E7F),    # Supplemental Punctuation (variable width)
+    (0xA700, 0xA71F),    # Modifier Tone Letters
 ]
 
 
 def is_excluded(cp: int) -> bool:
     """Check if codepoint should be excluded."""
+    # Check explicit ranges (emoji, RTL, complex scripts)
     for start, end in EXCLUDE_RANGES:
         if start <= cp <= end:
             return True
+    
+    # Check additional exclusion ranges (narrow/variable-width chars)
+    for start, end in ADDITIONAL_EXCLUDE_RANGES:
+        if start <= cp <= end:
+            return True
+    
+    # Check for problematic characters using Unicode category
+    try:
+        char = chr(cp)
+        category = unicodedata.category(char)
+        if category in EXCLUDE_CATEGORIES:
+            return True
+        
+        # Also exclude characters with east asian width 'W' or 'F' (double-width)
+        # as they break monospace alignment
+        ea_width = unicodedata.east_asian_width(char)
+        if ea_width in ('W', 'F'):  # Wide or Fullwidth
+            return True
+            
+    except (ValueError, TypeError):
+        return True
+    
     return False
 
 
