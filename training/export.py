@@ -13,7 +13,7 @@ from model import CharEncoder
 
 CELL_W, CELL_H = 8, 16
 
-# Ranges to EXCLUDE (emoji + RTL scripts)
+# Ranges to EXCLUDE (emoji + RTL scripts + combining marks)
 EXCLUDE_RANGES = [
     # Emoji
     (0x1F300, 0x1F9FF),  # Miscellaneous Symbols and Pictographs, Emoticons, etc.
@@ -31,6 +31,14 @@ EXCLUDE_RANGES = [
     (0x08A0, 0x08FF),    # Arabic Extended-A
     (0xFB50, 0xFDFF),    # Arabic Presentation Forms-A
     (0xFE70, 0xFEFF),    # Arabic Presentation Forms-B
+    # Combining diacritical marks (zero-width, cause misalignment)
+    (0x0300, 0x036F),    # Combining Diacritical Marks
+    (0x1AB0, 0x1AFF),    # Combining Diacritical Marks Extended
+    (0x1DC0, 0x1DFF),    # Combining Diacritical Marks Supplement
+    (0x20D0, 0x20FF),    # Combining Diacritical Marks for Symbols
+    (0xFE20, 0xFE2F),    # Combining Half Marks
+    # Other problematic
+    (0xFFFC, 0xFFFC),    # Object Replacement Character
 ]
 
 
