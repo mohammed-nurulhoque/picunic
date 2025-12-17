@@ -13,19 +13,30 @@ from model import CharEncoder
 
 CELL_W, CELL_H = 8, 16
 
-# Emoji/colored ranges to EXCLUDE
-EMOJI_RANGES = [
+# Ranges to EXCLUDE (emoji + RTL scripts)
+EXCLUDE_RANGES = [
+    # Emoji
     (0x1F300, 0x1F9FF),  # Miscellaneous Symbols and Pictographs, Emoticons, etc.
     (0x2600, 0x26FF),    # Miscellaneous Symbols (many are emoji)
     (0x2700, 0x27BF),    # Dingbats (many are emoji)
     (0xFE00, 0xFE0F),    # Variation Selectors
     (0x1F000, 0x1FFFF),  # All supplementary symbols
+    # RTL scripts (mess up text direction)
+    (0x0590, 0x05FF),    # Hebrew
+    (0x0600, 0x06FF),    # Arabic
+    (0x0700, 0x074F),    # Syriac
+    (0x0750, 0x077F),    # Arabic Supplement
+    (0x0780, 0x07BF),    # Thaana
+    (0x07C0, 0x07FF),    # NKo
+    (0x08A0, 0x08FF),    # Arabic Extended-A
+    (0xFB50, 0xFDFF),    # Arabic Presentation Forms-A
+    (0xFE70, 0xFEFF),    # Arabic Presentation Forms-B
 ]
 
 
-def is_emoji(cp: int) -> bool:
-    """Check if codepoint is in emoji range."""
-    for start, end in EMOJI_RANGES:
+def is_excluded(cp: int) -> bool:
+    """Check if codepoint should be excluded."""
+    for start, end in EXCLUDE_RANGES:
         if start <= cp <= end:
             return True
     return False
@@ -43,7 +54,7 @@ def get_font_chars(font_path: str) -> list[str]:
                     continue
                 if cp > 0xFFFF:  # Skip supplementary planes (mostly emoji)
                     continue
-                if is_emoji(cp):
+                if is_excluded(cp):
                     continue
                 char = chr(cp)
                 if char not in chars:
