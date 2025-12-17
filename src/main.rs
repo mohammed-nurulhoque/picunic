@@ -24,9 +24,6 @@ struct Args {
     /// Use only ASCII characters (0x20-0x7E)
     #[arg(short, long)]
     ascii: bool,
-    /// Include all characters (including emoji/colored)
-    #[arg(long)]
-    all: bool,
 }
 
 fn main() -> Result<(), PicunicError> {
@@ -45,8 +42,6 @@ fn main() -> Result<(), PicunicError> {
 
     if args.ascii {
         converter = converter.ascii_only();
-    } else if !args.all {
-        converter = converter.monochrome_only();
     }
 
     let mut image = image::open(&args.input)?;
