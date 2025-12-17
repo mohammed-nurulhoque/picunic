@@ -56,13 +56,18 @@ class CharacterDataset(Dataset):
 
     def _augment(self, img: Image.Image) -> Image.Image:
         arr = np.array(img, dtype=np.float32)
-        # Noise σ=10 - simulates image noise/compression artifacts
+        
+        # Foreground/background color variation
+        # Map 0 -> random(0-64), 255 -> random(192-255)
+        bg = random.randint(0, 64)
+        fg = random.randint(192, 255)
+        arr = bg + (arr / 255.0) * (fg - bg)
+        
+        # Noise σ=8
         if random.random() > 0.3:
-            arr = np.clip(arr + np.random.normal(0, 10, arr.shape), 0, 255)
-        # Slight brightness variation ±10%
-        if random.random() > 0.5:
-            arr = np.clip(arr * random.uniform(0.9, 1.1), 0, 255)
-        return Image.fromarray(arr.astype(np.uint8))
+            arr = arr + np.random.normal(0, 8, arr.shape)
+        
+        return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
 
     def render_canonical(self, char_idx: int) -> torch.Tensor:
         return self._render(self.chars[char_idx], augment=False)

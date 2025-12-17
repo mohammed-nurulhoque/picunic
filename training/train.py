@@ -23,6 +23,13 @@ def train(args):
     print(f"Dataset: {len(dataset)} samples, {num_classes} chars")
 
     encoder = CharEncoder(args.embedding_dim).to(device)
+    
+    # Load pretrained encoder weights if provided
+    if args.from_checkpoint:
+        print(f"Loading pretrained weights from {args.from_checkpoint}")
+        ckpt = torch.load(args.from_checkpoint, map_location=device, weights_only=False)
+        encoder.load_state_dict(ckpt['encoder'])
+    
     classifier = nn.Linear(args.embedding_dim, num_classes).to(device)
     params = list(encoder.parameters()) + list(classifier.parameters())
     print(f"Params: {sum(p.numel() for p in params):,}")
@@ -85,4 +92,5 @@ if __name__ == '__main__':
     p.add_argument('--embedding-dim', type=int, default=64)
     p.add_argument('--samples-per-char', type=int, default=100)
     p.add_argument('--output', default='checkpoints')
+    p.add_argument('--from-checkpoint', help='Load pretrained encoder weights')
     train(p.parse_args())

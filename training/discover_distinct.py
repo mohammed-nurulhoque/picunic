@@ -4,22 +4,42 @@
 import numpy as np
 import torch
 from PIL import Image, ImageDraw, ImageFont
+from fontTools.ttLib import TTFont
 from model import CharEncoder
 
 CELL_W, CELL_H = 8, 16
 
-# Unicode ranges to scan (monospace-friendly)
-UNICODE_RANGES = [
-    (0x0020, 0x007E),  # Basic ASCII
-    (0x00A0, 0x00FF),  # Latin-1 Supplement
-    (0x2500, 0x257F),  # Box Drawing
-    (0x2580, 0x259F),  # Block Elements
-    (0x25A0, 0x25FF),  # Geometric Shapes
-    (0x2600, 0x26FF),  # Miscellaneous Symbols
-    (0x2700, 0x27BF),  # Dingbats
-    (0x2800, 0x28FF),  # Braille
-    (0x3000, 0x303F),  # CJK Symbols
+# Emoji ranges to exclude
+EMOJI_RANGES = [
+    (0x1F300, 0x1F9FF),
+    (0x2600, 0x26FF),
+    (0x2700, 0x27BF),
+    (0xFE00, 0xFE0F),
+    (0x1F000, 0x1FFFF),
 ]
+
+
+def is_emoji(cp: int) -> bool:
+    for start, end in EMOJI_RANGES:
+        if start <= cp <= end:
+            return True
+    return False
+
+
+def get_font_chars(font_path: str) -> list[str]:
+    """Get all non-emoji chars from font."""
+    tt = TTFont(font_path)
+    chars = []
+    for table in tt['cmap'].tables:
+        if hasattr(table, 'cmap'):
+            for cp in table.cmap.keys():
+                if cp < 0x20 or cp > 0xFFFF or is_emoji(cp):
+                    continue
+                char = chr(cp)
+                if char not in chars:
+                    chars.append(char)
+    tt.close()
+    return sorted(chars, key=ord)
 
 
 def render_char(char: str, font: ImageFont.FreeTypeFont) -> np.ndarray:
@@ -39,20 +59,6 @@ def render_char(char: str, font: ImageFont.FreeTypeFont) -> np.ndarray:
     return np.array(img, dtype=np.float32) / 255.0
 
 
-def get_candidate_chars(font: ImageFont.FreeTypeFont) -> list[str]:
-    """Get all renderable chars from Unicode ranges."""
-    chars = []
-    for start, end in UNICODE_RANGES:
-        for cp in range(start, end + 1):
-            char = chr(cp)
-            try:
-                # Check if font can render it (non-empty)
-                bbox = font.getbbox(char)
-                if bbox and (bbox[2] - bbox[0]) > 0:
-                    chars.append(char)
-            except:
-                pass
-    return chars
 
 
 def compute_embeddings(chars: list[str], font: ImageFont.FreeTypeFont, encoder: CharEncoder) -> np.ndarray:
@@ -101,12 +107,11 @@ def main():
     p.add_argument('--output', default='discovered_charset.py')
     args = p.parse_args()
     
-    print(f"Loading font: {args.font}")
-    font = ImageFont.truetype(args.font, 14)
+    print(f"Scanning font: {args.font}")
+    chars = get_font_chars(args.font)
+    print(f"  Found {len(chars)} characters in font")
     
-    print("Finding renderable Unicode chars...")
-    chars = get_candidate_chars(font)
-    print(f"  Found {len(chars)} candidates")
+    font = ImageFont.truetype(args.font, 14)
     
     print(f"Loading model: {args.checkpoint}")
     ckpt = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
