@@ -48,8 +48,6 @@ fn main() -> Result<(), PicunicError> {
 
     if args.ascii {
         matcher.filter_ascii();
-    } else {
-        matcher.filter_monochrome();
     }
 
     // Dimensions per source char
