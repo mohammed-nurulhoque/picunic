@@ -8,10 +8,6 @@
 
 
 
-> is 80x24 the traditional size of terminal chars?
-
-
-
 > Let's start with a proof of concept. And remember that for this to work, you need fixed width font, some modern mono fonts are not strictly fixed width
 
 At this point, it implemented a PoC that maps each image chunk to the unicode directly using a closeness function
@@ -70,4 +66,6 @@ At this point, a connection error happened. Instead of the last prompt, it went 
 
 > cleanup code, documentation and assets for commit                                                                                                                                                            │
 
+>  in the readme include line-art.png and line-art-out.png the second one is picture of terminal output generated from first                                                                 │
 
+> put them side by side in a table

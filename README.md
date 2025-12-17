@@ -51,4 +51,4 @@ python discover_distinct.py --font ../assets/DejaVuSansMono.ttf \
 
 ## Vibe-coded
 
-This project was 100% vibe-coded in a single session with Claude. See [CHAT_TRANSCRIPT.md](CHAT_TRANSCRIPT.md) for the full conversation.
+This project was 100% vibe-coded in a single session with cursor-cli. See [CHAT_TRANSCRIPT.md](CHAT_TRANSCRIPT.md) for the full conversation.
