@@ -12,18 +12,18 @@ struct Args {
     /// Output width in characters
     #[arg(short, long, default_value = "80")]
     width: u32,
-    /// Output height in characters (auto if not specified)
-    #[arg(short = 'H', long)]
-    height: Option<u32>,
-    /// Path to model directory (default: assets/)
+    /// Path to model directory
     #[arg(short, long, default_value = "assets")]
     model_dir: PathBuf,
-    /// Invert the output
+    /// Invert the image
     #[arg(short, long)]
     invert: bool,
-    /// Use only ASCII characters (0x20-0x7E)
+    /// Use only ASCII characters
     #[arg(short, long)]
     ascii: bool,
+    /// Enable Atkinson dithering
+    #[arg(short, long)]
+    dither: bool,
 }
 
 fn main() -> Result<(), PicunicError> {
@@ -34,11 +34,8 @@ fn main() -> Result<(), PicunicError> {
         args.model_dir.join("encoder.embeddings.bin"),
         args.model_dir.join("encoder.chars.json"),
     )?
-    .with_width(args.width);
-
-    if let Some(h) = args.height {
-        converter = converter.with_height(h);
-    }
+    .with_width(args.width)
+    .with_dither(args.dither);
 
     if args.ascii {
         converter = converter.ascii_only();

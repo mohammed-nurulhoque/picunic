@@ -1,64 +1,70 @@
 # picunic
 
-Convert images to Unicode art using CNN embeddings. Includes `bigfoont` for rendering text as large Unicode art.
+A terminal image viewer that renders images using Unicode characters. Uses a CNN to match image regions to visually similar Unicode glyphs.
 
 | Input | Output |
 |-------|--------|
 | ![Input](line-art.png) | ![Output](line-art-out.png) |
 
-## Usage
-
-### picunic - image to Unicode
-
-```bash
-picunic image.png              # 80 chars wide
-picunic image.png -w 120       # custom width
-picunic image.png -w 120 -H 40 # explicit height
-picunic image.png --ascii      # ASCII only
-picunic image.png --all        # include emoji chars
-picunic image.png -i           # invert colors
-```
-
-### bigfoont - text to large Unicode
-
-```bash
-bigfoont "HELLO" -w 4 -H 4                                  # 4×4 chars per letter
-bigfoont "HELLO" -w 3 -H 3 --font assets/PressStart2P.ttf   # pixel font (best)
-bigfoont "HELLO" --ascii                                    # ASCII output only
-```
-
-## How it works
-
-1. Train CNN encoder on 563 visually distinct Unicode characters
-2. Split input image into 8×16 chunks (terminal cell aspect ratio)
-3. Embed each chunk → cosine similarity with precomputed char embeddings
-4. Output best matching character per chunk
-
-## Build
+## Installation
 
 ```bash
 cargo build --release
 ```
 
+## Usage
+
+### picunic - view images in terminal
+
+```bash
+picunic image.png              # 80 chars wide
+picunic image.png -w 120       # custom width
+picunic image.png -i           # invert colors (for light terminals)
+picunic image.png -d           # enable dithering for photos
+picunic image.png -a           # ASCII only output
+```
+
+### bigfoont - render text as large Unicode art
+
+```bash
+bigfoont "HELLO"                                       # default 2×2 chars per letter
+bigfoont "HELLO" -w 4 -H 4                             # 4×4 chars per letter
+bigfoont "HELLO" -f assets/PressStart2P.ttf            # use pixel font
+bigfoont "HELLO" -a                                    # ASCII output only
+```
+
+## How it works
+
+1. Splits input image into 8×16 pixel chunks (matching terminal cell aspect ratio)
+2. Runs each chunk through a CNN encoder to get a 64-dim embedding
+3. Finds the Unicode character with the most similar embedding (cosine similarity)
+4. Outputs the best matching character for each chunk
+
+The CNN is trained on ~2000 Unicode characters rendered in a monospace font, learning to map visual patterns to character embeddings.
+
 ## Training
+
+To retrain the model with a different font:
 
 ```bash
 cd training
-pip install torch pillow numpy tqdm onnx
+pip install -r requirements.txt
 
 python train.py --font ../assets/DejaVuSansMono.ttf --epochs 50
-python export.py --checkpoint checkpoints/best.pt --output ../assets/encoder --font ../assets/DejaVuSansMono.ttf
+python export.py --checkpoint checkpoints/best.pt \
+    --output ../assets/encoder \
+    --font ../assets/DejaVuSansMono.ttf
 ```
 
-### Discover distinct characters
-
-Use learned embeddings to find visually distinct Unicode chars:
+## Examples
 
 ```bash
-python discover_distinct.py --font ../assets/DejaVuSansMono.ttf \
-  --checkpoint checkpoints/best.pt --threshold 0.80
+# View a photo with dithering
+picunic flower.png -w 100 -d -i
+
+# View line art (no dithering needed)
+picunic line-art.png -w 80
+
+# Generate ASCII art text banner
+bigfoont "Hello World" -w 6 -H 3
 ```
-
-## Vibe-coded
-
-This project was 100% vibe-coded in a single session with cursor-cli. See [CHAT_TRANSCRIPT.md](CHAT_TRANSCRIPT.md) for the full conversation.

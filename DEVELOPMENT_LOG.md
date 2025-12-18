@@ -7,20 +7,33 @@
 - Natural baseline positioning (not centered/stretched)
 - CNN encoder: Conv→BN→ReLU→Pool (×3) → FC → 64-dim L2-normalized embedding
 - Classification + contrastive loss
-- Auto-discover distinct chars via pairwise embedding similarity
+- Character filtering: excludes zero-width, combining marks, RTL scripts, emoji
 
 ### Inference (Rust)
-- Split image into 8×16 chunks
-- ONNX CNN inference → cosine similarity with precomputed embeddings
-- Best matching character per chunk
+- Split image into 8×16 chunks (bilinear sampling)
+- ONNX Runtime for CNN inference
+- Cosine similarity with precomputed character embeddings
+- Optional Atkinson dithering for photos
 
 ## Key Numbers
-- 563 visually distinct characters (from 1215 candidates, threshold 0.80)
-- 170K parameters
-- 100% training accuracy
+- ~2200 monospace-safe Unicode characters
+- 170K model parameters
+- 64-dimensional embeddings
 - ~100ms inference for 80×30 output
 
 ## Character Filtering
-- Default: monochrome-safe (ASCII, Latin-1, Box Drawing, Block Elements, Geometric)
-- `--ascii`: ASCII only (0x20-0x7E)
-- `--all`: all 563 including emoji
+
+Characters excluded from the charset:
+- Zero-width and combining marks (Mn, Me, Mc, Cf categories)
+- Control characters (Cc)
+- Modifier letters and symbols (Lm, Sk)
+- RTL scripts (Hebrew, Arabic, etc.)
+- Double-width characters (East Asian W/F)
+- Emoji and supplementary planes
+
+## Dithering
+
+Atkinson dithering converts grayscale images to binary before matching:
+- Scale automatically computed from output resolution
+- Creates features at character-cell granularity
+- Improves photo rendering by making patterns the CNN can match
