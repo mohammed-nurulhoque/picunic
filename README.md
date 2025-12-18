@@ -4,7 +4,8 @@ A terminal image viewer that renders images using Unicode characters. Uses a CNN
 
 | Input | Output |
 |-------|--------|
-| ![Input](line-art.png) | ![Output](line-art-out.png) |
+| ![](line-art.png) | ![](line-art-out.png) |
+| ![](flower.png) | ![](flower-out.png) |
 
 ## Installation
 
