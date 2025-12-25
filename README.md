@@ -57,6 +57,10 @@ python export.py --checkpoint checkpoints/best.pt \
     --font ../assets/DejaVuSansMono.ttf
 ```
 
+## Web Version
+
+Picunic can also run in the browser as a WebAssembly application. See [WASM_BUILD.md](WASM_BUILD.md) for build instructions.
+
 ## Examples
 
 ```bash

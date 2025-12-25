@@ -1,0 +1,11 @@
+{
+  "name": "picunic-web",
+  "version": "0.1.0",
+  "description": "WebAssembly build of Picunic image to Unicode converter",
+  "scripts": {
+    "build": "wasm-pack build --target web --out-dir pkg",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

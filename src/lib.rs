@@ -2,9 +2,17 @@
 
 pub mod chunk;
 pub mod dither;
+
+// Embedding module uses ort, which doesn't support WASM
+#[cfg(not(target_arch = "wasm32"))]
 pub mod embedding;
 
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;
+
 pub use chunk::ImageChunker;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub use embedding::EmbeddingMatcher;
 
 use thiserror::Error;
@@ -21,13 +29,15 @@ pub enum PicunicError {
 
 pub type Result<T> = std::result::Result<T, PicunicError>;
 
-/// Main converter using CNN embeddings
+/// Main converter using CNN embeddings (native only, uses ONNX Runtime)
+#[cfg(not(target_arch = "wasm32"))]
 pub struct Converter {
     width: u32,
     matcher: EmbeddingMatcher,
     dither: bool,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Converter {
     pub fn new(
         model_path: impl AsRef<std::path::Path>,

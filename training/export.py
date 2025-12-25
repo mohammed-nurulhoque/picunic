@@ -145,10 +145,13 @@ def export(args):
 
     out = Path(args.output)
 
-    # ONNX export
+    # ONNX export (without external data for web compatibility)
     torch.onnx.export(encoder, torch.randn(1, 1, 16, 8), out.with_suffix('.onnx'),
                       input_names=['image'], output_names=['embedding'],
-                      dynamic_axes={'image': {0: 'batch'}, 'embedding': {0: 'batch'}}, opset_version=14)
+                      dynamic_axes={'image': {0: 'batch'}, 'embedding': {0: 'batch'}}, 
+                      opset_version=14,
+                      export_params=True,  # Embed parameters in model
+                      do_constant_folding=True)  # Fold constants
     print(f"Saved {out.with_suffix('.onnx')}")
 
     # Get all chars from font
