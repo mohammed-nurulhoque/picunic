@@ -48,11 +48,16 @@ async function initApp() {
         const embeddingsArray = new Float32Array(embeddingsBuffer);
         const embeddings = Array.from(embeddingsArray);
         
+        // Get luminosities (fallback to 0.5 for backward compatibility)
+        const luminosities = charsData.luminosities || 
+            new Array(charsData.chars.length).fill(0.5);
+        
         // Create converter
         converter = new WasmConverter(
             embeddings,
             charsData.chars,
-            charsData.embedding_dim
+            charsData.embedding_dim,
+            luminosities
         );
         
         statusEl.textContent = 'Ready! Upload an image to get started.';
@@ -129,14 +134,17 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
         const width = parseInt(document.getElementById('width-input').value);
         const dither = document.getElementById('dither-checkbox').checked;
         const asciiOnly = document.getElementById('ascii-checkbox').checked;
+        const edgeWeight = parseFloat(document.getElementById('edge-weight-slider').value);
         
         converter.set_width(width);
         converter.set_dither(dither);
         converter.set_ascii_only(asciiOnly);
+        converter.set_edge_weight(edgeWeight);
         
-        // Process image to get chunks
+        // Process image to get chunks and luminosities
         const processed = converter.process_image(imageData, img.width, img.height);
         const chunks = processed.chunks;
+        const luminosities = Array.from(processed.luminosities);
         const outWidth = processed.width;
         const outHeight = processed.height;
         
@@ -147,12 +155,13 @@ document.getElementById('convert-btn').addEventListener('click', async () => {
             for (let x = 0; x < outWidth; x++) {
                 const chunkIdx = y * outWidth + x;
                 const chunk = Array.from(chunks[chunkIdx]);
+                const chunkLum = luminosities[chunkIdx];
                 
                 // Get embedding from ONNX
                 const embedding = await getEmbedding(chunk);
                 
-                // Find best matching character
-                const bestChar = converter.find_best_char(embedding);
+                // Find best matching character (with luminosity)
+                const bestChar = converter.find_best_char(embedding, chunkLum);
                 row += bestChar;
             }
             rows.push(row);
@@ -205,6 +214,11 @@ function getImageData(img) {
     const imageData = ctx.getImageData(0, 0, img.width, img.height);
     return imageData.data;
 }
+
+// Update edge weight display when slider changes
+document.getElementById('edge-weight-slider').addEventListener('input', (e) => {
+    document.getElementById('edge-weight-value').textContent = parseFloat(e.target.value).toFixed(2);
+});
 
 // Initialize on page load
 initApp();

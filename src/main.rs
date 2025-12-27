@@ -24,6 +24,9 @@ struct Args {
     /// Enable Atkinson dithering
     #[arg(short, long)]
     dither: bool,
+    /// Edge weight for edge vs luminosity matching (0.0-1.0, default: 1.0 = pure edge)
+    #[arg(long, default_value = "1.0")]
+    edge_weight: f32,
 }
 
 fn main() -> Result<(), PicunicError> {
@@ -35,7 +38,8 @@ fn main() -> Result<(), PicunicError> {
         args.model_dir.join("encoder.chars.json"),
     )?
     .with_width(args.width)
-    .with_dither(args.dither);
+    .with_dither(args.dither)
+    .with_edge_weight(args.edge_weight);
 
     if args.ascii {
         converter = converter.ascii_only();

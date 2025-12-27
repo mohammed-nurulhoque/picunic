@@ -63,6 +63,15 @@ impl Converter {
         self
     }
 
+    /// Set the weight for edge similarity vs luminosity matching (0.0-1.0)
+    /// - 1.0: pure edge matching (default)
+    /// - 0.0: pure luminosity matching
+    /// - 0.5: equal weight
+    pub fn with_edge_weight(mut self, weight: f32) -> Self {
+        self.matcher.set_edge_weight(weight);
+        self
+    }
+
     pub fn convert(&mut self, image: &image::DynamicImage) -> String {
         let gray = image.to_luma8();
         let (img_w, img_h) = (gray.width(), gray.height());

@@ -146,10 +146,11 @@ def export(args):
     out = Path(args.output)
 
     # ONNX export (without external data for web compatibility)
+    # Use opset 13 to avoid version conversion issues
     torch.onnx.export(encoder, torch.randn(1, 1, 16, 8), out.with_suffix('.onnx'),
                       input_names=['image'], output_names=['embedding'],
                       dynamic_axes={'image': {0: 'batch'}, 'embedding': {0: 'batch'}}, 
-                      opset_version=14,
+                      opset_version=13,  # Use 13 to avoid conversion issues
                       export_params=True,  # Embed parameters in model
                       do_constant_folding=True)  # Fold constants
     print(f"Saved {out.with_suffix('.onnx')}")
@@ -159,9 +160,10 @@ def export(args):
     chars = get_font_chars(args.font)
     print(f"Found {len(chars)} characters in font")
     
-    # Render and compute embeddings
+    # Render and compute embeddings + luminosities
     font = ImageFont.truetype(args.font, 14)
     emb = []
+    luminosities = []
     valid_chars = []
     
     with torch.no_grad():
@@ -170,6 +172,9 @@ def export(args):
                 img = render_char(c, font)
                 tensor = torch.from_numpy(img).unsqueeze(0).unsqueeze(0)
                 emb.append(encoder(tensor).squeeze().numpy())
+                # Compute average luminosity (0-1 range)
+                avg_lum = img.mean()
+                luminosities.append(float(avg_lum))
                 valid_chars.append(c)
             except:
                 pass  # Skip chars that fail to render
@@ -179,8 +184,12 @@ def export(args):
     print(f"Saved {out.with_suffix('.embeddings.bin')} {emb.shape}")
 
     with open(out.with_suffix('.chars.json'), 'w') as f:
-        json.dump({'chars': valid_chars, 'embedding_dim': dim}, f)
-    print(f"Saved {out.with_suffix('.chars.json')} ({len(valid_chars)} chars)")
+        json.dump({
+            'chars': valid_chars, 
+            'embedding_dim': dim,
+            'luminosities': luminosities  # Precomputed average luminosities (0-1)
+        }, f)
+    print(f"Saved {out.with_suffix('.chars.json')} ({len(valid_chars)} chars with luminosities)")
 
 
 if __name__ == '__main__':
